@@ -2143,8 +2143,8 @@ bool verify_report(string& type, string& serialized_signed_report,
     return false;
   }
 
-  if (sr.report_format() != "vse_attestation-report") {
-    printf("Format should be vse_attestation-report\n");
+  if (sr.report_format() != "vse-attestation-report") {
+    printf("Format should be vse-attestation-report\n");
     return false;
   }
 
@@ -2183,13 +2183,16 @@ bool verify_report(string& type, string& serialized_signed_report,
             size, (byte*)sr.signature().data());
     EC_KEY_free(ecc_key);
   } else {
+    printf("Unsupported algorithm\n");
     return false;
   }
+
+if (!success) printf("report verify returning false\n");
 
   return success;
 }
 
-void print_attestation_info(const vse_attestation_report_info& r) {
+void print_attestation_info(vse_attestation_report_info& r) {
   printf("\nvse attestation report\n");
   if (r.has_enclave_type()) {
     printf("Enclave type: %s\n", r.enclave_type().c_str());
@@ -2198,9 +2201,10 @@ void print_attestation_info(const vse_attestation_report_info& r) {
     printf("Measurement: ");
     print_bytes(r.verified_measurement().size(),
         (byte*)r.verified_measurement().data());
+    printf("\n");
   }
   if (r.has_not_before() && r.has_not_after()) {
-    printf("Not before  : %s\n", r.not_before().c_str());
+    printf("Not before : %s\n", r.not_before().c_str());
     printf("Not after  : %s\n", r.not_after().c_str());
   }
   if (r.has_user_data()) {
@@ -2237,10 +2241,17 @@ void print_signed_report(const signed_report& sr) {
   if (sr.has_report()) {
   }
   if (sr.has_signing_key()) {
+    printf("Signing key:\n");
+    print_key(sr.signing_key());
+    printf("\n");
   }
   if (sr.has_signing_algorithm()) {
+    printf("Signing algorithm: %s\n", sr.signing_algorithm().c_str());
   }
   if (sr.has_signature()) {
+    printf("Signature   :\n");
+    print_bytes(sr.signature().size(), (byte*)sr.signature().data());
+    printf("\n");
   }
   printf("\n");
 }
@@ -2284,7 +2295,7 @@ bool make_attestation_user_data(const string& enclave_type,
   if (!time_to_string(t_now, &time_str))
     return false;
   out->set_time(time_str);
-  out->CopyFrom(enclave_key);
+  out->mutable_enclave_key()->CopyFrom(enclave_key);
   return true;
 }
 
